@@ -1,0 +1,64 @@
+---
+# It doesn't look like it's possible to filter on the specific ALB
+# so it's necessary to loop through all ALB an set fact
+# Note from 2.9 this module is renamed elb_application_lb_info.
+
+# A Load balancer is created by provisioning the nginx proxy.
+# This code attempts to identify it and configure DNS
+
+- name: "ELB Info"
+  tags:
+    - dns
+    - elb
+  elb_classic_lb_info:
+    region: "{{ region }}"
+  register: elb_info
+
+
+- name: "Ingress-Nginx LB"
+  tags:
+    - dns
+    - elb
+  set_fact:
+    k8s_elb: "{{ item }}"
+  loop: "{{ elb_info.elbs }}"
+  loop_control:
+    label: "{{ item.load_balancer_name }}"
+  when:
+   - item.scheme == "internet-facing"
+   - item.tags['kubernetes.io/service-name'] is defined
+   - item.tags['kubernetes.io/service-name'] == "default/ingress-nginx-controller"
+
+
+- name: "DNS {{ load_balancer | default('load balancer') }}"
+  tags:
+    - dns
+  route53:
+    state: present
+    zone: "{{ dns_zone }}"
+    record: "{{ load_balancer }}"
+    profile: "{{ route53_profile }}"
+    type: A
+    # https://github.com/ansible/ansible/issues/29858
+    value: "{{ k8s_elb.canonical_hosted_zone_name }}." 
+    alias: yes
+    alias_hosted_zone_id: "{{ k8s_elb.canonical_hosted_zone_name_id }}"
+    overwrite: yes
+  when: k8s_elb is defined
+  register: dns
+
+
+- name: "CName records"
+  tags:
+    - dns
+  route53:
+    state: present
+    zone: "{{ dns_zone }}"
+    profile: "{{ route53_profile }}"
+    record: "{{ item }}.epimorphics.net"
+    type: CNAME
+    ttl: "{{ ttl }}"
+    value: "{{ load_balancer }}"
+    overwrite: yes
+  with_items: "{{ cnames }}"
+  when: k8s_elb is defined

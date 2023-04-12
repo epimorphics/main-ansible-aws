@@ -1,0 +1,4 @@
+dns_zone: "epimorphics.net"
+load_balancer: "{{ instance }}-eks-lb.{{ dns_zone }}"
+
+ttl: 600

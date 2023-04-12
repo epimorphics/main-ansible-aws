@@ -1,0 +1,38 @@
+lambda:
+  name: "sns2slack"
+  description: "SNS to Slack Webhook"
+  s3_bucket: "epi-repository"
+  runtime: "python3.8"
+  version: "v2.06"
+
+slack:
+  webhook: "{{ vault_slack.webhook }}"
+  username: "{{ instance | upper }} Alerts"
+  channel: "#{{ instance }}-alerts"
+
+email: "tech@epimorphics.com"
+
+sns:
+  policy:
+    name: "alert-publisher"
+    description: "SNS Alert Publication"
+  topic:
+    name:
+      email: "{{ instance }}-email-alert"
+      slack: "{{ instance }}-slack-alert"
+    display_name:
+      email: "{{ instance | upper }} Alert - Email"
+      slack: "{{ instance | upper }} Alert - Slack"
+    delivery_policy:
+      http:
+        defaultHealthyRetryPolicy:
+          minDelayTarget: 2
+          maxDelayTarget: 4
+          numRetries: 3
+          numMinDelayRetries: 0
+          numMaxDelayRetries: 3
+          numNoDelayRetries: 0
+          backoffFunction: "linear"
+        disableSubscriptionOverrides: True
+        defaultThrottlePolicy:
+          maxReceivesPerSecond: 10

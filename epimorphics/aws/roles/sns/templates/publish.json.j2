@@ -1,0 +1,15 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sns:Publish",
+      "Effect": "Allow",
+      "Resource": "{{ email_topic.sns_arn }}"
+    },
+    {
+      "Action": "sns:Publish",
+      "Effect": "Allow",
+      "Resource": "{{ slack_topic.sns_arn }}"
+    }
+  ]
+}

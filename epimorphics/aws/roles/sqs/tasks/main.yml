@@ -1,0 +1,55 @@
+- name: "Create bucket"
+  s3_bucket:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ triggers | map(attribute='bucket') | unique }}"
+
+
+- name: "Create dictionaries"
+  amazon.aws.s3_object:
+    bucket: "{{ item.bucket }}"
+    object: "{{ item.directory }}"
+    mode: create
+    region: "{{ region }}"
+  loop_control:
+    label: "{{ item.bucket }}/{{ item.directory }}"
+  loop: "{{ triggers }}"
+
+
+- name: "SQS Queue"
+  sqs_queue:
+    name: "{{ item.name }}"
+    region: "{{ region }}"
+    default_visibility_timeout: "{{ item.VisibilityTimeout | default(sqs.default.VisibilityTimeout) }}"
+    receive_message_wait_time: "{{ item.ReceiveMessageWaitTimeSeconds | default(sqs.default.ReceiveMessageWaitTimeSeconds) }}"
+    delivery_delay: "{{ item.DelaySeconds | default(sqs.default.DelaySeconds) }}" 
+    policy:
+      Version: "2008-10-17"
+      Id: "__default_policy_ID"
+      Statement:
+        - Action: "SQS:{{ item.action | default('*') }}"
+          Effect: "Allow"
+          Condition:
+            ArnLike:
+              "aws:SourceArn": "arn:aws:s3:::{{ item.bucket }}"
+            StringEquals:
+              "aws:SourceAccount": "{{ aws.account }}"
+          Principal:
+            Service: "s3.amazonaws.com"
+          Resource: "arn:aws:sqs:{{ region }}:{{ aws.account }}:{{ item.name }}"
+  loop_control:
+    label: "{{ item.name }}"
+  loop: "{{ sqs.queues }}"
+
+
+- name: "Create S3 Trigger"
+  community.aws.s3_bucket_notification:
+    state: present
+    event_name: "{{ item.name }}"
+    bucket_name: "{{ item.bucket }}"
+    queue_arn: "arn:aws:sqs:{{ region }}:{{ aws.account }}:{{ item.queue }}"
+    events: ["s3:ObjectCreated:*"]
+    prefix: "{{ item.directory }}"
+  loop_control:
+    label: "{{ item.name }}: {{ item.bucket }}/{{ item.directory }} -> {{ item.queue }}"
+  loop: "{{ triggers }}"

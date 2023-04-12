@@ -34,9 +34,10 @@ jobs:
     - name: "Git Information"
       id: gitinfo
       run: |
-        echo ::set-output name=name::${GITHUB_REF#refs/*/}
-        echo ::set-output name=branch::${GITHUB_REF#refs/heads/}
-        echo ::set-output name=tag::${GITHUB_REF#refs/tags/}
+        echo name=${GITHUB_REF#refs/*/}       >> $GITHUB_OUTPUT
+        echo branch=${GITHUB_REF#refs/heads/} >> $GITHUB_OUTPUT
+        echo tag=${GITHUB_REF#refs/tags/}     >> $GITHUB_OUTPUT
+
     - name: "Install Ansible"
       shell: "bash"
       run: "sudo apt-get install -y ansible"

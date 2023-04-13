@@ -30,7 +30,7 @@
    - item.tags['kubernetes.io/service-name'] == "default/ingress-nginx-controller"
 
 
-- name: "DNS {{ load_balancer | default('load balancer') }}"
+- name: "DNS {{ load_balancer | default('load balancer') }} -> {{ k8s_elb.canonical_hosted_zone_name }}"
   tags:
     - dns
   route53:
@@ -40,9 +40,10 @@
     profile: "{{ route53_profile }}"
     type: A
     # https://github.com/ansible/ansible/issues/29858
-    value: "{{ k8s_elb.canonical_hosted_zone_name }}." 
+    value: "{{ nlb.dualstack | default(false) | ternary('dualstack.','') }}{{ k8s_elb.canonical_hosted_zone_name }}."
     alias: yes
     alias_hosted_zone_id: "{{ k8s_elb.canonical_hosted_zone_name_id }}"
+    alias_evaluate_target_health: "{{ nlb.evaluate_target_health | default(false) }}"
     overwrite: yes
   when: k8s_elb is defined
   register: dns

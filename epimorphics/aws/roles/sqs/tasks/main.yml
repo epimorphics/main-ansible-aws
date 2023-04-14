@@ -3,6 +3,7 @@
     name: "{{ item }}"
     state: present
   loop: "{{ triggers | map(attribute='bucket') | unique }}"
+  when: triggers is defined
 
 
 - name: "Create dictionaries"
@@ -14,9 +15,12 @@
   loop_control:
     label: "{{ item.bucket }}/{{ item.directory }}"
   loop: "{{ triggers }}"
+  when: triggers is defined
 
 
 - name: "SQS Queue"
+  vars:
+    resource: "arn:aws:sqs:{{ region }}:{{ aws.account }}:{{ item.name }}"
   sqs_queue:
     name: "{{ item.name }}"
     region: "{{ region }}"
@@ -26,17 +30,9 @@
     policy:
       Version: "2008-10-17"
       Id: "__default_policy_ID"
-      Statement:
-        - Action: "SQS:{{ item.action | default('*') }}"
-          Effect: "Allow"
-          Condition:
-            ArnLike:
-              "aws:SourceArn": "arn:aws:s3:::{{ item.bucket }}"
-            StringEquals:
-              "aws:SourceAccount": "{{ aws.account }}"
-          Principal:
-            Service: "s3.amazonaws.com"
-          Resource: "arn:aws:sqs:{{ region }}:{{ aws.account }}:{{ item.name }}"
+      Statement: "{{ item.PolicyStatement | default(sqs.default.PolicyStatement) | combine( { 'Resource': resource} ) }}"
+    queue_type: "{{ item.type | default('standard') }}"
+    content_based_deduplication: "{{ item.deduplication | default(omit) }}"
   loop_control:
     label: "{{ item.name }}"
   loop: "{{ sqs.queues }}"
@@ -53,3 +49,4 @@
   loop_control:
     label: "{{ item.name }}: {{ item.bucket }}/{{ item.directory }} -> {{ item.queue }}"
   loop: "{{ triggers }}"
+  when: triggers is defined

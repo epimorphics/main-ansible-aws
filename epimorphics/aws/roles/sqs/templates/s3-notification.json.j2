@@ -1,0 +1,32 @@
+{
+  "NotificationConfiguration": {
+    "QueueConfigurations": [
+{% for i in item.notifications %}
+      {
+        "Id": "{{ i.name }}",
+        "QueueArn": "arn:aws:sqs:eu-west-1:{{ aws.account }}:{{ i.queue }}",
+        "Events": [
+          "s3:ObjectCreated:*"
+        ],
+        "Filter": {
+          "Key": {
+            "FilterRules": [
+              {
+                "Name": "Prefix",
+                "Value": "{{ i.directory }}"
+              },
+              {
+                "Name": "Suffix",
+                "Value": ""
+              }
+            ]
+          }
+        }
+      }
+{%- if not loop.last %}
+,
+{% endif %}
+{% endfor %}
+    ]
+  }
+}

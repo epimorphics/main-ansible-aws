@@ -48,4 +48,4 @@ jobs:
         draft: false
         prerelease: false
         files: |
-          epimorphics-deployment-${{ steps.gitinfo.outputs.tag }}.tar.gz
+          epimorphics-aws-${{ steps.gitinfo.outputs.tag }}.tar.gz

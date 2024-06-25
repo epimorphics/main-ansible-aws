@@ -36,7 +36,7 @@
     state: present
     s3_bucket: "{{ lambda.s3_bucket }}"
     s3_key: "release/lambda/{{ lambda.name }}/{{ lambda.runtime }}/{{ lambda.name }}-{{ lambda.version }}.zip"
-    runtime: "python3.8"
+    runtime: "{{ lambda.runtime }}"
     role: "{{ lambda_execution.arn }}"
     handler: "{{ lambda.name }}.handler"
     tags:
@@ -50,7 +50,7 @@
   when: lambda_execution.arn is defined
 
 
-- name: "SNS topic ({{ sns.topic.name.email }})"
+- name: "SNS topic ({{ sns.topic.display_name.email }})"
   tags:
     - iam_role
     - topic
@@ -66,7 +66,7 @@
   register: email_topic
 
 
-- name: "SNS topic ({{ sns.topic.name.slack }})"
+- name: "SNS topic ({{ sns.topic.display_name.slack }})"
   tags:
     - iam_role
     - topic

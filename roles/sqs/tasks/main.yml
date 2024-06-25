@@ -51,7 +51,7 @@
   #  loop: "{{ triggers.buckets }}"
 
 
-  - name: "S3 notification file ( /tmp/s3-{{ item.name }}-notification.json )"
+  - name: "S3 notification file"
     template:
       src: "s3-notification.json.j2"
       dest: "/tmp/s3-{{ item.name }}-notification.json"

@@ -1,0 +1,13 @@
+- name: "IAM Role"
+  tags:
+    - iam
+  iam_role:
+    name: "{{ item.name }}"
+    state: "present"
+    assume_role_policy_document: "{{ lookup('file', 'trust.json') }}"
+    managed_policies: "{{ item.policies }}"
+    purge_policies: true
+    description: "{{ item.description | default(item.name) }}"
+  loop_control:
+    label: "{{ item.description | default(item.name) }}"
+  loop: "{{ roles }}"

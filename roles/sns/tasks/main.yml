@@ -4,6 +4,7 @@
     - iam
     - iam_role
     - lambda
+#   - sns
   vars:
     service: "lambda.amazonaws.com"
   iam_role:
@@ -37,20 +38,20 @@
     s3_bucket: "{{ lambda.s3_bucket }}"
     s3_key: "release/lambda/{{ lambda.name }}/{{ lambda.runtime }}/{{ lambda.name }}-{{ lambda.version }}.zip"
     runtime: "{{ lambda.runtime }}"
-    role: "{{ lambda_execution.arn }}"
+    role: "{{ lambda_execution.iam_role.arn }}"
     handler: "{{ lambda.name }}.handler"
     tags:
       Ansible: "True"
     environment_variables:
-      USERNAME: "{{ slack.username }}"
-      CHANNEL: "{{ slack.channel }}"
+      USERNAME: "{{ slack.default.username }}"
+      CHANNEL: "{{ slack.default.channel }}"
       PYTHONPATH: "./libs"
-      WEBHOOK: "{{ slack.webhook }}"
+      WEBHOOK: "{{ slack.default.webhook }}"
   register: lambda_status
-  when: lambda_execution.arn is defined
+  when: lambda_execution.iam_role.arn is defined
 
 
-- name: "SNS topic ({{ sns.topic.display_name.email }})"
+- name: "SNS topic ({{ sns.topic.name.email }}: {{ sns.topic.display_name.email }})"
   tags:
     - iam_role
     - topic

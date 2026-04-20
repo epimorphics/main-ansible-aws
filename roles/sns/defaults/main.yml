@@ -2,13 +2,14 @@ lambda:
   name: "sns2slack"
   description: "SNS to Slack Webhook"
   s3_bucket: "epi-repository"
-  runtime: "python3.10"
-  version: "v3.01"
+  runtime: "python3.13"
+  version: "v3.04"
 
 slack:
-  webhook: "{{ vault_slack.webhook }}"
-  username: "{{ instance | upper }} Alerts"
-  channel: "#{{ instance }}-alerts"
+  default:
+    webhook: "{{ vault_slack.webhook }}"
+    username: "{{ instance | upper }} Alerts"
+    channel: "#{{ instance }}-alerts"
 
 email: "tech@epimorphics.com"
 
@@ -18,11 +19,11 @@ sns:
     description: "SNS Alert Publication"
   topic:
     name:
-      email: "{{ instance }}-email-alert"
-      slack: "{{ instance }}-slack-alert"
+      email: "{{ sns_email_topic }}"
+      slack: "{{ sns_slack_topic }}"
     display_name:
-      email: "{{ instance | upper }} Alert - Email"
-      slack: "{{ instance | upper }} Alert - Slack"
+      email: "{{ notification }} - Email"
+      slack: "{{ notification }} - Slack"
     delivery_policy:
       http:
         defaultHealthyRetryPolicy:
